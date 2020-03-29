@@ -127,8 +127,9 @@ func (registry Registry) Register(name string) *Carg {
 	carg := &Carg{
 		Cmd:        name,
 		Flags:      make(map[string]*Flag),
-		flagsShort: make(map[string]string, 0),
+		flagsShort: make(map[string]string),
 		Args:       make(map[string]*Arg),
+		argNames:   make([]string, 0),
 	}
 
 	// add entry to the registry
@@ -163,20 +164,24 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 	// get `Carg` object from the registry
 	carg := registry[commandName]
 
-	// process all command line arguments (except command)
+	// process all command line arguments (except command name)
 	for {
-		var value string
 
+		// get current command-line argument value
+		var value string
 		value, valuesToProcess = nextValue(valuesToProcess)
 
 		// if `value` is empty, break the loop
 		if len(value) == 0 {
 			break
 		}
-
+		// check if `value` is a `flag` or an `argument`
 		if isFlag(value) {
 
+			// trim `-` characters from the `value`
 			name := strings.TrimLeft(value, "-")
+
+			// get flag object stored with the `carg`
 			var flag *Flag
 
 			if isShortFlag(value) {
@@ -193,6 +198,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 				flag = carg.Flags[name]
 			}
 
+			// set flag value
 			if flag.IsBoolean {
 				flag.Value = "true"
 			} else {
@@ -202,7 +208,14 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 				}
 			}
 		} else {
-			for _, arg := range carg.Args {
+
+			// process as argument
+			for _, argName := range carg.argNames {
+
+				// get argument from the name of the argument
+				arg := carg.Args[argName]
+
+				// assign value if value of the argument is empty
 				if len(arg.Value) == 0 {
 					arg.Value = value
 					break
@@ -234,29 +247,37 @@ type Carg struct {
 
 	// registered command argument values
 	Args map[string]*Arg
+
+	// list of the argument names (for ordered iteration)
+	argNames []string
 }
 
 // AddFlag method registeres a "Flag" value
 func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultValue string) *Carg {
 
+	// return if flag is already registered
 	if _, ok := carg.Flags[name]; ok {
 		return carg
 	}
 
+	// create a Flag object
 	flag := &Flag{
 		Name:      name,
 		ShortName: shortName,
 		IsBoolean: isBool,
 	}
 
+	// register flag
 	carg.Flags[name] = flag
 
+	// set default value
 	if isBool {
 		carg.Flags[name].DefaultValue = "false"
 	} else {
 		carg.Flags[name].DefaultValue = defaultValue
 	}
 
+	// store short flag name
 	if len(shortName) > 0 {
 		carg.flagsShort[shortName] = name
 	}
@@ -267,15 +288,21 @@ func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultVal
 // AddArg registers a "Arg" value
 func (carg *Carg) AddArg(name string) *Carg {
 
+	// return if argument is already registered
 	if _, ok := carg.Args[name]; ok {
 		return carg
 	}
 
+	// create Arg object
 	arg := &Arg{
 		Name: name,
 	}
 
+	// register argument
 	carg.Args[name] = arg
+
+	// store argument name
+	carg.argNames = append(carg.argNames, name)
 
 	return carg
 }
