@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	// create new registry
+	// create a new registry
 	registry := clapper.NewRegistry()
 
 	// register the root command
@@ -21,7 +21,7 @@ func main() {
 		AddFlag("version", "V", false, "").
 		AddFlag("dir", "", false, "/var/users")
 
-	// register the `info` command
+	// register the `info` sub-command
 	registry.
 		Register("info").
 		AddArg("username").
@@ -30,29 +30,29 @@ func main() {
 		AddFlag("version", "V", false, "1.0.1").
 		AddFlag("output", "o", false, "./")
 
-	// register the `ghost` command
+	// register the `ghost` sub-command
 	registry.
 		Register("ghost")
 
-	// parse command line arguments
+	// parse command-line arguments
 	carg, err := registry.Parse(os.Args[1:])
 
 	// check for error
 	if err != nil {
-		fmt.Printf("Error => %#v\n", err)
+		fmt.Printf("error => %#v\n", err)
 		return
 	}
 
-	// get executed command name
-	fmt.Printf("Command Name => %#v\n", carg.Cmd)
+	// get executed sub-command name
+	fmt.Printf("sub-command => %#v\n", carg.Cmd)
 
 	// get argument values
 	for _, v := range carg.Args {
-		fmt.Printf("Arg => %#v\n", v)
+		fmt.Printf("argument-value => %#v\n", v)
 	}
 
 	// get flag values
 	for _, v := range carg.Flags {
-		fmt.Printf("Flag => %#v\n", v)
+		fmt.Printf("flag-value => %#v\n", v)
 	}
 }

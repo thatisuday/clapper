@@ -46,11 +46,23 @@ func isShortFlag(value string) bool {
 
 // check if values corresponds to the root command
 func isRootCommand(values []string, registry Registry) bool {
+
+	// FALSE: if the root command is not registered
+	if _, ok := registry[""]; !ok {
+		return false
+	}
+
+	// TRUE: if all `values` are empty or the first `value` is a flag
 	if len(values) == 0 || isFlag(values[0]) {
 		return true
 	}
 
-	if _, ok := registry[values[0]]; !ok {
+	// get root `Carg` value from the registry
+	rootCarg := registry[""]
+
+	// TRUE: if the first value is not a registered command
+	// and some arguments are registered for the root command
+	if _, ok := registry[values[0]]; len(rootCarg.Args) > 0 && !ok {
 		return true
 	}
 
