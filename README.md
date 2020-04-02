@@ -1,6 +1,8 @@
 # clapper
 A simple but powerful Go package to parse command-line arguments [_getopt(3) style_](http://man7.org/linux/man-pages/man3/getopt.3.html). Designed especially for making CLI based libraries with ease.
 
+![go-version](https://img.shields.io/github/go-mod/go-version/thatisuday/clapper?label=Go%20Version&style=flat-square)
+
 ![logo](/assets/clapper-logo.png)
 
 ## Documentation
@@ -102,7 +104,7 @@ When the **root command** is executed with short/long flag names as well as by c
 $ go run cmd.go userinfo -V 1.0.1 -v --force --dir ./sub/dir
 $ go run cmd.go -V 1.0.1 --verbose --force userinfo --dir ./sub/dir
 $ go run cmd.go -V 1.0.1 -v --force --dir ./sub/dir userinfo
-$ go run cmd.go --version 1.0.1 --verbose --force -dir ./sub/dir userinfo
+$ go run cmd.go --version 1.0.1 --verbose --force --dir ./sub/dir userinfo
 
 sub-command => ""
 argument-value => &clapper.Arg{Name:"output", Value:"userinfo"}

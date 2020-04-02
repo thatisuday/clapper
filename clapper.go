@@ -36,12 +36,30 @@ import (
 
 // check if value is a flag
 func isFlag(value string) bool {
-	return len(value) >= 2 && value[0] == '-'
+	return len(value) >= 2 && strings.HasPrefix(value, "-")
 }
 
 // check if value is a short flag
 func isShortFlag(value string) bool {
-	return isFlag(value) && len(value) == 2 && value[1] != '-'
+	return isFlag(value) && len(value) == 2 && !strings.HasPrefix(value, "--")
+}
+
+// check if flag is unsupported
+func isUnsupportedFlag(value string) bool {
+
+	// a flag should be at least two characters log
+	if len(value) >= 2 {
+
+		// if short flag, it should start with `-` but not with `--`
+		if len(value) == 2 {
+			return !strings.HasPrefix(value, "-") || strings.HasPrefix(value, "--")
+		}
+
+		// if long flag, it should start with `--` and not with `---`
+		return !strings.HasPrefix(value, "--") || strings.HasPrefix(value, "---")
+	}
+
+	return false
 }
 
 // check if values corresponds to the root command
@@ -90,7 +108,7 @@ func nextValue(slice []string) (v string, newSlice []string) {
 
 /***********************************************/
 
-// ErrorUnknownCommand represents an error when command line arguments contains an unregistered command.
+// ErrorUnknownCommand represents an error when command line arguments contain an unregistered command.
 type ErrorUnknownCommand struct {
 	Name string
 }
@@ -99,7 +117,7 @@ func (e ErrorUnknownCommand) Error() string {
 	return fmt.Sprintf("unknown command %s found in the arguments", e.Name)
 }
 
-// ErrorUnknownFlag represents an error when command line arguments contains an unregistered flag.
+// ErrorUnknownFlag represents an error when command line arguments contain an unregistered flag.
 type ErrorUnknownFlag struct {
 	Name    string
 	IsShort bool
@@ -108,6 +126,17 @@ type ErrorUnknownFlag struct {
 func (e ErrorUnknownFlag) Error() string {
 	return fmt.Sprintf("unknown flag %s found in the arguments", e.Name)
 }
+
+// ErrorUnsupportedFlag represents an error when command line arguments contain an unsupported flag.
+type ErrorUnsupportedFlag struct {
+	Name string
+}
+
+func (e ErrorUnsupportedFlag) Error() string {
+	return fmt.Sprintf("unsupported flag %s found in the arguments", e.Name)
+}
+
+/*---------------------*/
 
 // Registry holds the configuration of the registered commands.
 type Registry map[string]*Carg
@@ -148,6 +177,13 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 
 	// command line argument values to process
 	valuesToProcess := values
+
+	// check for invalid flag structure
+	for _, val := range values {
+		if isFlag(val) && isUnsupportedFlag(val) {
+			return nil, ErrorUnsupportedFlag{val}
+		}
+	}
 
 	// check if command is a root command
 	if isRootCommand(values, registry) {
@@ -233,6 +269,8 @@ func NewRegistry() Registry {
 	return make(Registry)
 }
 
+/*---------------------*/
+
 // Carg type holds the structured information about the command line arguments
 type Carg struct {
 
@@ -307,6 +345,8 @@ func (carg *Carg) AddArg(name string) *Carg {
 	return carg
 }
 
+/*---------------------*/
+
 // Flag type holds the structured information about the command line flag
 type Flag struct {
 
@@ -325,6 +365,8 @@ type Flag struct {
 	// value of the flag
 	Value string
 }
+
+/*---------------------*/
 
 // Arg type holds the structured information about the command line argument
 type Arg struct {
