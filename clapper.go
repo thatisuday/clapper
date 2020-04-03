@@ -41,12 +41,16 @@ func formatCommandValues(values []string) (formatted []string) {
 
 	// split a value by `=`
 	for _, value := range values {
-		parts := strings.Split(value, "=")
+		if isFlag(value) {
+			parts := strings.Split(value, "=")
 
-		for _, part := range parts {
-			if strings.Trim(part, " ") != "" {
-				formatted = append(formatted, part)
+			for _, part := range parts {
+				if strings.Trim(part, " ") != "" {
+					formatted = append(formatted, part)
+				}
 			}
+		} else {
+			formatted = append(formatted, value)
 		}
 	}
 
@@ -197,22 +201,22 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 	// command-line argument values to process
 	valuesToProcess := values
 
-	// check for invalid flag structure
-	for _, val := range values {
-		if isFlag(val) && isUnsupportedFlag(val) {
-			return nil, ErrorUnsupportedFlag{val}
-		}
-	}
-
 	// check if command is a root command
 	if isRootCommand(values, registry) {
-		commandName = ""
+		commandName = "" // root command name
 	} else {
 		commandName, valuesToProcess = nextValue(values)
 	}
 
 	// format command-line argument values
-	valuesToProcess = formatCommandValues(values)
+	valuesToProcess = formatCommandValues(valuesToProcess)
+
+	// check for invalid flag structure
+	for _, val := range valuesToProcess {
+		if isFlag(val) && isUnsupportedFlag(val) {
+			return nil, ErrorUnsupportedFlag{val}
+		}
+	}
 
 	// if command is not registered, return `ErrorUnknownCommand` error
 	if _, ok := registry[commandName]; !ok {
