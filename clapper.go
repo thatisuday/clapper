@@ -34,6 +34,25 @@ import (
         PRIVATE FUNCTIONS AND VARIABLES
 ***********************************************/
 
+// format command-line argument values
+func formatCommandValues(values []string) (formatted []string) {
+
+	formatted = make([]string, 0)
+
+	// split a value by `=`
+	for _, value := range values {
+		parts := strings.Split(value, "=")
+
+		for _, part := range parts {
+			if strings.Trim(part, " ") != "" {
+				formatted = append(formatted, part)
+			}
+		}
+	}
+
+	return
+}
+
 // check if value is a flag
 func isFlag(value string) bool {
 	return len(value) >= 2 && strings.HasPrefix(value, "-")
@@ -175,7 +194,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 	// command name
 	var commandName string
 
-	// command line argument values to process
+	// command-line argument values to process
 	valuesToProcess := values
 
 	// check for invalid flag structure
@@ -191,6 +210,9 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 	} else {
 		commandName, valuesToProcess = nextValue(values)
 	}
+
+	// format command-line argument values
+	valuesToProcess = formatCommandValues(values)
 
 	// if command is not registered, return `ErrorUnknownCommand` error
 	if _, ok := registry[commandName]; !ok {

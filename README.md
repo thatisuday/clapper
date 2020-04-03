@@ -209,5 +209,16 @@ $ go run cmd.go ghost
 sub-command => "ghost"
 ```
 
+#### Example 11
+When wrong flag format is provided.
+
+```
+$ go run cmd.go ---version 
+error => clapper.ErrorUnsupportedFlag{Name:"---version"}
+
+$ go run cmd.go -version 
+error => clapper.ErrorUnsupportedFlag{Name:"-version"}
+```
+
 ## Contribution
-I am looking for some contributors for writing better test cases and documentation.
+A lot of improvements can be made to this library, one of which is the support for combined short flags, like `-abc`. If you are willing to contribute, create a pull request and mention your bug fixes or enhancements in the comment.
