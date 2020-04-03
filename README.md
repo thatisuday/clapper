@@ -167,9 +167,9 @@ flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, Defau
 When the position of arguments' values are changed and extra argument values are provided.
 
 ```
-$ go run cmd.go info -v thatisuday -V 2.0.0  teachers extra
-$ go run cmd.go info thatisuday -v -V 2.0.0  teachers extra
-$ go run cmd.go info thatisuday teachers extra -v -V 2.0.0
+$ go run cmd.go info -v thatisuday -V 2.0.0 teachers extra
+$ go run cmd.go info thatisuday -v --version=2.0.0 teachers extra
+$ go run cmd.go info thatisuday teachers extra -v -V=2.0.0
 
 sub-command => "info"
 argument-value => &clapper.Arg{Name:"username", Value:"thatisuday"}
@@ -210,11 +210,14 @@ sub-command => "ghost"
 ```
 
 #### Example 11
-When wrong flag format is provided.
+When unsupported flag format is provided.
 
 ```
 $ go run cmd.go ---version 
 error => clapper.ErrorUnsupportedFlag{Name:"---version"}
+
+$ go run cmd.go ---v=1.0.0 
+error => clapper.ErrorUnsupportedFlag{Name:"---v"}
 
 $ go run cmd.go -version 
 error => clapper.ErrorUnsupportedFlag{Name:"-version"}
