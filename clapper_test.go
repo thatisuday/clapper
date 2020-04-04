@@ -1,34 +1,37 @@
 package clapper
 
 import (
+	"os"
 	"testing"
 )
 
 // return a new registry
 func getTestRegistry() Registry {
 
-	// create new registry
+	// create a new registry
 	registry := NewRegistry()
 
 	// register the root command
-	registry.
-		Register("").
-		AddArg("output").
-		AddFlag("force", "f", true, "").
-		AddFlag("verbose", "v", true, "").
-		AddFlag("version", "V", false, "").
-		AddFlag("dir", "", false, "/var/users")
+	if _, ok := os.LookupEnv("NO_ROOT"); !ok {
+		registry.
+			Register("").                           // root command
+			AddArg("output", "").                   //
+			AddFlag("force", "f", true, "").        //
+			AddFlag("verbose", "v", true, "").      //
+			AddFlag("version", "V", false, "").     //
+			AddFlag("dir", "", false, "/var/users") // default value
+	}
 
-	// register the `info` command
+	// register the `info` sub-command
 	registry.
-		Register("info").
-		AddArg("username").
-		AddArg("category").
-		AddFlag("verbose", "v", true, "").
-		AddFlag("version", "V", false, "1.0.1").
-		AddFlag("output", "o", false, "./")
+		Register("info").                        // `info` command
+		AddArg("username", "").                  //
+		AddArg("category", "manager").           // default value
+		AddFlag("verbose", "v", true, "").       //
+		AddFlag("version", "V", false, "1.0.1"). // default value
+		AddFlag("output", "o", false, "./")      // default value
 
-		// register the `ghost` command
+	// register the `ghost` sub-command
 	registry.
 		Register("ghost")
 

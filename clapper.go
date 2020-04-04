@@ -243,7 +243,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 			// trim `-` characters from the `value`
 			name := strings.TrimLeft(value, "-")
 
-			// get flag object stored with the `carg`
+			// get flag object stored in the `carg`
 			var flag *Flag
 
 			if isShortFlag(value) {
@@ -274,7 +274,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 			// process as argument
 			for _, argName := range carg.argNames {
 
-				// get argument from the name of the argument
+				// get argument object stored in the `carg`
 				arg := carg.Args[argName]
 
 				// assign value if value of the argument is empty
@@ -350,7 +350,7 @@ func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultVal
 }
 
 // AddArg registers a "Arg" value
-func (carg *Carg) AddArg(name string) *Carg {
+func (carg *Carg) AddArg(name string, defaultValue string) *Carg {
 
 	// return if argument is already registered
 	if _, ok := carg.Args[name]; ok {
@@ -359,7 +359,8 @@ func (carg *Carg) AddArg(name string) *Carg {
 
 	// create Arg object
 	arg := &Arg{
-		Name: name,
+		Name:         name,
+		DefaultValue: defaultValue,
 	}
 
 	// register argument
@@ -388,7 +389,7 @@ type Flag struct {
 	// default value of the flag
 	DefaultValue string
 
-	// value of the flag
+	// value of the flag (provided by the user)
 	Value string
 }
 
@@ -396,6 +397,12 @@ type Flag struct {
 
 // Arg type holds the structured information about the command line argument
 type Arg struct {
-	Name  string
+	// name of the argument
+	Name string
+
+	// default value of the argument
+	DefaultValue string
+
+	// value of the argument (provided by the user)
 	Value string
 }
