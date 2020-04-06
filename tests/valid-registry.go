@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	// create a new registry
 	registry := clapper.NewRegistry()
 
@@ -38,6 +37,8 @@ func main() {
 
 	// parse command-line arguments
 	carg, err := registry.Parse(os.Args[1:])
+
+	/*----------------*/
 
 	// check for error
 	if err != nil {
