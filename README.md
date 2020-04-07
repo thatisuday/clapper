@@ -1,7 +1,8 @@
 # clapper
 A simple but powerful Go package to parse command-line arguments [_getopt(3) style_](http://man7.org/linux/man-pages/man3/getopt.3.html). Designed especially for making CLI based libraries with ease.
 
-![go-version](https://img.shields.io/github/go-mod/go-version/thatisuday/clapper?label=Go%20Version&style=flat-square)
+![go-version](https://img.shields.io/github/go-mod/go-version/thatisuday/clapper?label=Go%20Version&style=flat-square) &nbsp;
+![Build](https://github.com/thatisuday/clapper/workflows/CI/badge.svg?style=flat-square)
 
 ![logo](/assets/clapper-logo.png)
 
