@@ -17,20 +17,21 @@ func main() {
 		registry.
 			Register("").                           // root command
 			AddArg("output", "").                   //
-			AddFlag("force", "f", true, "").        //
-			AddFlag("verbose", "v", true, "").      //
-			AddFlag("version", "V", false, "").     //
-			AddFlag("dir", "", false, "/var/users") // default value
+			AddFlag("force", "f", true, "").        // --force, -f | default value: "false"
+			AddFlag("verbose", "v", true, "").      // --verbose, -v | default value: "false"
+			AddFlag("version", "V", false, "").     // --version, -V <value>
+			AddFlag("dir", "", false, "/var/users") // --dir <value> | default value: "/var/users"
 	}
 
 	// register the `info` sub-command
 	registry.
 		Register("info").                        // sub-command
-		AddArg("category", "manager").           // default value
+		AddArg("category", "manager").           // default value: manager
 		AddArg("username", "").                  //
-		AddFlag("verbose", "v", true, "").       //
-		AddFlag("version", "V", false, "1.0.1"). // default value
-		AddFlag("output", "o", false, "./")      // default value
+		AddFlag("verbose", "v", true, "").       // --verbose, -v | default value: "false"
+		AddFlag("version", "V", false, "1.0.1"). // --version, -V <value> | default value: "1.0.1"
+		AddFlag("output", "o", false, "./").     // --output, -o <value> | default value: "./"
+		AddFlag("no-clean", "", true, "")        // --no-clean | default value of --clean: "true"
 
 	// register the `ghost` sub-command
 	registry.
@@ -38,6 +39,8 @@ func main() {
 
 	// parse command-line arguments
 	carg, err := registry.Parse(os.Args[1:])
+
+	/*----------------*/
 
 	// check for error
 	if err != nil {

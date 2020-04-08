@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Package clapper processes the command line arguments of getopt(3) syntax.
+// Package clapper processes the command-line arguments of getopt(3) syntax.
 // This package provides the ability to process the root command, sub commands,
-// command line arguments and command line flags.
+// command-line arguments and command-line flags.
 package clapper
 
 import (
@@ -65,6 +65,15 @@ func isFlag(value string) bool {
 // check if value is a short flag
 func isShortFlag(value string) bool {
 	return isFlag(value) && len(value) == 2 && !strings.HasPrefix(value, "--")
+}
+
+// check if value starts with `--no-` prefix
+func isInvertFlag(value string) (bool, string) {
+	if isFlag(value) && strings.HasPrefix(value, "--no-") {
+		return true, strings.TrimLeft(value, "--no-") // trim `--no-` prefix
+	}
+
+	return false, ""
 }
 
 // check if flag is unsupported
@@ -131,7 +140,7 @@ func nextValue(slice []string) (v string, newSlice []string) {
 
 /***********************************************/
 
-// ErrorUnknownCommand represents an error when command line arguments contain an unregistered command.
+// ErrorUnknownCommand represents an error when command-line arguments contain an unregistered command.
 type ErrorUnknownCommand struct {
 	Name string
 }
@@ -140,17 +149,16 @@ func (e ErrorUnknownCommand) Error() string {
 	return fmt.Sprintf("unknown command %s found in the arguments", e.Name)
 }
 
-// ErrorUnknownFlag represents an error when command line arguments contain an unregistered flag.
+// ErrorUnknownFlag represents an error when command-line arguments contain an unregistered flag.
 type ErrorUnknownFlag struct {
-	Name    string
-	IsShort bool
+	Name string
 }
 
 func (e ErrorUnknownFlag) Error() string {
 	return fmt.Sprintf("unknown flag %s found in the arguments", e.Name)
 }
 
-// ErrorUnsupportedFlag represents an error when command line arguments contain an unsupported flag.
+// ErrorUnsupportedFlag represents an error when command-line arguments contain an unsupported flag.
 type ErrorUnsupportedFlag struct {
 	Name string
 }
@@ -166,8 +174,8 @@ type Registry map[string]*Carg
 
 // Register method registers a command.
 // The "name" argument should be a simple string.
-// If "name" is empty, it is considered as a root command.
-// If a command is already registered, the registered command is returned.
+// If "name" is an empty string, it is considered as a root command.
+// If a command is already registered, the registered `*Carg` object is returned.
 func (registry Registry) Register(name string) *Carg {
 
 	// check if command is already registered, if found, return existing entry
@@ -190,9 +198,9 @@ func (registry Registry) Register(name string) *Carg {
 	return carg
 }
 
-// Parse method parses command line arguments and returns an appropriate "Carg" object registered in the registry.
-// If command is not registered, return `ErrorUnknownCommand` error
-// If flag is not registered, return `ErrorUnknownFlag` error
+// Parse method parses command-line arguments and returns an appropriate "*Carg" object registered in the registry.
+// If command is not registered, it return `ErrorUnknownCommand` error.
+// If there is an error parsing a flag, it can return an `ErrorUnknownFlag` or `ErrorUnsupportedFlag` error.
 func (registry Registry) Parse(values []string) (*Carg, error) {
 
 	// command name
@@ -226,7 +234,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 	// get `Carg` object from the registry
 	carg := registry[commandName]
 
-	// process all command line arguments (except command name)
+	// process all command-line arguments (except command name)
 	for {
 
 		// get current command-line argument value
@@ -237,6 +245,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 		if len(value) == 0 {
 			break
 		}
+
 		// check if `value` is a `flag` or an `argument`
 		if isFlag(value) {
 
@@ -246,23 +255,43 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 			// get flag object stored in the `carg`
 			var flag *Flag
 
+			// check if flag is short or long
 			if isShortFlag(value) {
 				if _, ok := carg.flagsShort[name]; !ok {
-					return nil, ErrorUnknownFlag{name, true}
+					return nil, ErrorUnknownFlag{value}
 				}
 
-				flag = carg.Flags[carg.flagsShort[name]]
+				// get long flag name
+				flagName := carg.flagsShort[name]
+
+				flag = carg.Flags[flagName]
 			} else {
-				if _, ok := carg.Flags[name]; !ok {
-					return nil, ErrorUnknownFlag{name, false}
-				}
 
-				flag = carg.Flags[name]
+				// check if a flag is an invert flag
+				if ok, flagName := isInvertFlag(value); ok {
+					if _, ok := carg.Flags[flagName]; !ok {
+						return nil, ErrorUnknownFlag{value}
+					}
+
+					flag = carg.Flags[flagName]
+				} else {
+
+					// flag should not registered as an invert flag
+					if _flag, ok := carg.Flags[name]; !ok || _flag.IsInvert {
+						return nil, ErrorUnknownFlag{value}
+					}
+
+					flag = carg.Flags[name]
+				}
 			}
 
 			// set flag value
 			if flag.IsBoolean {
-				flag.Value = "true"
+				if flag.IsInvert {
+					flag.Value = "false" // if flag is an invert flag, its value will be `false`
+				} else {
+					flag.Value = "true"
+				}
 			} else {
 				if nextValue, nextValuesToProcess := nextValue(valuesToProcess); len(nextValue) != 0 && !isFlag(nextValue) {
 					flag.Value = nextValue
@@ -297,13 +326,13 @@ func NewRegistry() Registry {
 
 /*---------------------*/
 
-// Carg type holds the structured information about the command line arguments
+// Carg type holds the structured information about the command-line arguments.
 type Carg struct {
 
-	// name of the command executed
+	// name of the sub-command ("" for the root command)
 	Cmd string
 
-	// command line flags
+	// command-line flags
 	Flags map[string]*Flag
 
 	// mapping of the short flag names with long flag names
@@ -316,40 +345,11 @@ type Carg struct {
 	argNames []string
 }
 
-// AddFlag method registeres a "Flag" value
-func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultValue string) *Carg {
-
-	// return if flag is already registered
-	if _, ok := carg.Flags[name]; ok {
-		return carg
-	}
-
-	// create a Flag object
-	flag := &Flag{
-		Name:      name,
-		ShortName: shortName,
-		IsBoolean: isBool,
-	}
-
-	// register flag
-	carg.Flags[name] = flag
-
-	// set default value
-	if isBool {
-		carg.Flags[name].DefaultValue = "false"
-	} else {
-		carg.Flags[name].DefaultValue = defaultValue
-	}
-
-	// store short flag name
-	if len(shortName) > 0 {
-		carg.flagsShort[shortName] = name
-	}
-
-	return carg
-}
-
-// AddArg registers a "Arg" value
+// AddArg registers an argument configuration with the command.
+// The `name` argument represents the name of the argument.
+// The `defaultValue` argument represents the default value of the argument.
+// All arguments with a default value must be registered first.
+// If an argument with given `name` is already registered, then argument registration is skipped and registered `*Carg` object returned.
 func (carg *Carg) AddArg(name string, defaultValue string) *Carg {
 
 	// return if argument is already registered
@@ -372,9 +372,76 @@ func (carg *Carg) AddArg(name string, defaultValue string) *Carg {
 	return carg
 }
 
+// AddFlag method registers a command-line flag with the command.
+// The `name` argument is the long-name of the flag and it should not start with `--` prefix.
+// The `shortName` argument is the short-name of the flag and it should not start with `-` prefix.
+// The `isBool` argument indicates whether the flag holds a boolean value.
+// A boolean flag doesn't accept an input value such as `--flag=<value>` and its default value is "true".
+// The `defaultValue` argument represents the default value of the flag.
+// In case of a boolean flag, the `defaultValue` is redundant.
+// If the `name` value starts with `no-` prefix, then it is considered as an invert flag.
+// An invert flag is registered with the name `<flag>` produced by removing `no-` prefix from `no-<flag>` and its defaut value is "true".
+// When command-line arguments contain `--no-<flag>`, the value of the `<flag>` becomes "false".
+// If a flag with given `name` is already registered, then flag registration is skipped and registered `*Carg` object returned.
+func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultValue string) *Carg {
+
+	// actual flag names and default value
+	_name := name
+	_shortName := shortName
+	_defaultValue := defaultValue
+
+	// invert flag is a boolean flag with `no-` prefix
+	_isInvert := false
+
+	// short flag name should be only one character long
+	if _shortName != "" {
+		_shortName = _shortName[:1]
+	}
+
+	// set up `Flag` field values
+	if isBool {
+
+		// check if flag name has `no-` prefix
+		if strings.HasPrefix(name, "no-") {
+			_isInvert = true                      // is an invert flag
+			_name = strings.TrimLeft(name, "no-") // trim `no-` prefix
+			_defaultValue = "true"                // default value of an invert flag is `true`
+			_shortName = ""                       // no short flag name for invert flag
+		} else {
+			_defaultValue = "false" // default value of a boolean flag is `true`
+		}
+	} else {
+		_defaultValue = defaultValue
+	}
+
+	// return `carg` if flag is already registered
+	if _, ok := carg.Flags[_name]; ok {
+		return carg
+	}
+
+	// create a `Flag` object
+	flag := &Flag{
+		Name:         _name,
+		ShortName:    _shortName,
+		IsBoolean:    isBool,
+		IsInvert:     _isInvert,
+		DefaultValue: _defaultValue,
+	}
+
+	// register a flag
+	carg.Flags[_name] = flag
+
+	// register short flag name
+	if len(_shortName) > 0 {
+		carg.flagsShort[_shortName] = _name
+	}
+
+	return carg
+}
+
 /*---------------------*/
 
-// Flag type holds the structured information about the command line flag
+// Flag type holds the structured information about a flag.
 type Flag struct {
 
 	// long name of the flag
@@ -383,8 +450,11 @@ type Flag struct {
 	// short name of the flag
 	ShortName string
 
-	// if flag holds boolean value
+	// if the flag holds boolean value
 	IsBoolean bool
+
+	// if the flag is an invert flag (with `--no-` prefix)
+	IsInvert bool
 
 	// default value of the flag
 	DefaultValue string
@@ -395,7 +465,7 @@ type Flag struct {
 
 /*---------------------*/
 
-// Arg type holds the structured information about the command line argument
+// Arg type holds the structured information about an argument.
 type Arg struct {
 	// name of the argument
 	Name string

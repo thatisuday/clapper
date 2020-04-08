@@ -35,7 +35,7 @@ jobs:
       
       # step 4: run test
       - name: go test
-        run: go test
+        run: go test -v
 
   # job 2: run demo
   run-demo:
