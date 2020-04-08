@@ -28,10 +28,11 @@ func main() {
 		Register("info").                        // sub-command
 		AddArg("category", "manager").           // default value: manager
 		AddArg("username", "").                  //
+		AddArg("subjects...", "").               // variadic argument
 		AddFlag("verbose", "v", true, "").       // --verbose, -v | default value: "false"
 		AddFlag("version", "V", false, "1.0.1"). // --version, -V <value> | default value: "1.0.1"
 		AddFlag("output", "o", false, "./").     // --output, -o <value> | default value: "./"
-		AddFlag("no-clean", "", true, "")        // --no-clean | default value of --clean: "true"
+		AddFlag("no-clean", "", true, "")        // --no-clean | default value: "true"
 
 	// register the `ghost` sub-command
 	registry.

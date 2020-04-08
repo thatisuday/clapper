@@ -94,6 +94,15 @@ func isUnsupportedFlag(value string) bool {
 	return false
 }
 
+// check if value ends with `...` sufix
+func isVariadicArgument(value string) (bool, string) {
+	if !isFlag(value) && strings.HasSuffix(value, "...") {
+		return true, strings.TrimRight(value, "...") // trim `...` suffix
+	}
+
+	return false, ""
+}
+
 // check if values corresponds to the root command
 func isRootCommand(values []string, registry Registry) bool {
 
@@ -301,7 +310,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 		} else {
 
 			// process as argument
-			for _, argName := range carg.argNames {
+			for index, argName := range carg.argNames {
 
 				// get argument object stored in the `carg`
 				arg := carg.Args[argName]
@@ -311,9 +320,13 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 					arg.Value = value
 					break
 				}
+
+				// if last argument is a variadic argument, append values
+				if (index == len(carg.argNames)-1) && arg.IsVariadic {
+					arg.Value += fmt.Sprintf(",%s", value)
+				}
 			}
 		}
-
 	}
 
 	return carg, nil
@@ -347,10 +360,23 @@ type Carg struct {
 
 // AddArg registers an argument configuration with the command.
 // The `name` argument represents the name of the argument.
+// If value of the `name` argument ends with `...` suffix, then it is a variadic argument.
+// Variadic argument can accept multiple argument values and it should be the last registered argument.
+// Values of a variadic argument will be concatenated using comma (,).
 // The `defaultValue` argument represents the default value of the argument.
 // All arguments with a default value must be registered first.
 // If an argument with given `name` is already registered, then argument registration is skipped and registered `*Carg` object returned.
 func (carg *Carg) AddArg(name string, defaultValue string) *Carg {
+
+	// get argument name
+	_name := name
+	_isVariadic := false
+
+	// check if argument is variadic
+	if ok, argName := isVariadicArgument(_name); ok {
+		_name = argName
+		_isVariadic = true
+	}
 
 	// return if argument is already registered
 	if _, ok := carg.Args[name]; ok {
@@ -359,8 +385,9 @@ func (carg *Carg) AddArg(name string, defaultValue string) *Carg {
 
 	// create Arg object
 	arg := &Arg{
-		Name:         name,
+		Name:         _name,
 		DefaultValue: defaultValue,
+		IsVariadic:   _isVariadic,
 	}
 
 	// register argument
@@ -469,6 +496,9 @@ type Flag struct {
 type Arg struct {
 	// name of the argument
 	Name string
+
+	// variadic argument can take multiple values
+	IsVariadic bool
 
 	// default value of the argument
 	DefaultValue string

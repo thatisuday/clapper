@@ -48,10 +48,11 @@ func main() {
 		Register("info").                        // sub-command
 		AddArg("category", "manager").           // default value: manager
 		AddArg("username", "").                  //
+		AddArg("subjects...", "").               // variadic argument
 		AddFlag("verbose", "v", true, "").       // --verbose, -v | default value: "false"
 		AddFlag("version", "V", false, "1.0.1"). // --version, -V <value> | default value: "1.0.1"
 		AddFlag("output", "o", false, "./").     // --output, -o <value> | default value: "./"
-		AddFlag("no-clean", "", true, "")        // --no-clean | default value of --clean: "true"
+		AddFlag("no-clean", "", true, "")        // --no-clean | default value: "true"
 
 	// register the `ghost` sub-command
 	registry.
@@ -92,11 +93,11 @@ When the **root command** is executed with no command-line arguments.
 $ go run cmd.go
 
 sub-command => ""
-argument-value => &clapper.Arg{Name:"output", DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
+argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:""}
 flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:""}
 flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:""}
+flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
 ```
 
 #### Example 2
@@ -118,11 +119,11 @@ $ go run cmd.go -V 1.0.1 -v --force --dir ./sub/dir userinfo
 $ go run cmd.go --version 1.0.1 --verbose --force --dir ./sub/dir userinfo
 
 sub-command => ""
-argument-value => &clapper.Arg{Name:"output", DefaultValue:"", Value:"userinfo"}
-flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:"userinfo"}
 flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:"1.0.1"}
 flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:"./sub/dir"}
+flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
 ```
 
 #### Example 4
@@ -153,11 +154,11 @@ When `information` was intended to be a sub-command but not registered and the r
 $ go run cmd.go information --force
 
 sub-command => ""
-argument-value => &clapper.Arg{Name:"output", DefaultValue:"", Value:"information"}
+argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:"information"}
+flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:""}
 flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
 flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
 flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:""}
 ```
 
 #### Example 6
@@ -167,12 +168,13 @@ When a **sub-command** is executed.
 $ go run cmd.go info student -V -v --output ./opt/dir
 
 sub-command => "info"
-argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}
-argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}
+argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:""}
+argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}
 flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}
 flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}
 flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInvert:true, DefaultValue:"true", Value:""}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
 ```
 
 #### Example 7
@@ -182,21 +184,22 @@ When a command is executed with an **invert** flag (flag that starts with `--no-
 $ go run cmd.go info student -V -v --output ./opt/dir --no-clean
 
 sub-command => "info"
-argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}
-argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:""}
+argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}
+argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:""}
+argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}
 flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}
 flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInvert:true, DefaultValue:"true", Value:"false"}
 flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}
 ```
 
 #### Example 8
-When the position of argument values are changed and extra argument values are provided.
+When the position of argument values are changed and variadic arguments are provided.
 
 ```
-$ go run cmd.go info -v student -V 2.0.0 thatisuday extra
-$ go run cmd.go info student -v --version=2.0.0 thatisuday extra
-$ go run cmd.go info student thatisuday extra -v -V=2.0.0
+$ go run cmd.go info -v student -V 2.0.0 thatisuday math science physics
+$ go run cmd.go info student -v --version=2.0.0 thatisuday math science physics
+$ go run cmd.go info student thatisuday math science -v physics -V=2.0.0
 
 sub-command => "info"
 argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}
@@ -211,7 +214,7 @@ flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInv
 When a **sub-command** is registered without any flags.
 
 ```
-$ go run cmd.go ghost -v thatisuday -V 2.0.0 teachers extra
+$ go run cmd.go ghost -v thatisuday -V 2.0.0 teachers
 
 error => clapper.ErrorUnknownFlag{Name:"-v"}
 ```

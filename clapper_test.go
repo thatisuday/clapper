@@ -46,7 +46,7 @@ func TestEmptyRootCommand(t *testing.T) {
 	} else {
 		lines := []string{
 			`sub-command => ""`,
-			`argument-value => &clapper.Arg{Name:"output", DefaultValue:"", Value:""}`,
+			`argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:""}`,
 			`flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}`,
 			`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}`,
 			`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:""}`,
@@ -128,8 +128,9 @@ func TestValidInvertFlagValues(t *testing.T) {
 		} else {
 			lines := []string{
 				`sub-command => "info"`,
-				`argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}`,
-				`argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:""}`,
+				`argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}`,
+				`argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:""}`,
+				`argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}`,
 				`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
@@ -174,8 +175,8 @@ func TestFlagAssignmentSyntax(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "student", "-v", "--version=2.0.0", "thatisuday", "extra"},
-		[]string{"info", "student", "thatisuday", "extra", "-v", "-V=2.0.0"},
+		[]string{"info", "student", "-v", "--version=2.0.0", "thatisuday"},
+		[]string{"info", "student", "thatisuday", "-v", "-V=2.0.0"},
 	}
 
 	for _, options := range optionsList {
@@ -188,11 +189,49 @@ func TestFlagAssignmentSyntax(t *testing.T) {
 		} else {
 			lines := []string{
 				`sub-command => "info"`,
-				`argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}`,
-				`argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:"thatisuday"}`,
+				`argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}`,
+				`argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:"thatisuday"}`,
+				`argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:"2.0.0"}`,
 				`flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
+			}
+
+			for _, line := range lines {
+				if !strings.Contains(fmt.Sprintf("%s", output), line) {
+					t.Fail()
+				}
+			}
+		}
+	}
+}
+
+// test for valid variadic argument values
+func TestValidVariadicArgumentValues(t *testing.T) {
+
+	// options list
+	optionsList := [][]string{
+		[]string{"info", "student", "thatisuday", "-V", "-v", "--output", "./opt/dir", "--no-clean", "math", "science", "physics"},
+		[]string{"info", "student", "--version", "--no-clean", "thatisuday", "--output", "./opt/dir", "math", "science", "--verbose", "physics"},
+	}
+
+	for _, options := range optionsList {
+		// command
+		cmd := exec.Command("go", append([]string{"run", "demo/cmd.go"}, options...)...)
+
+		// get output
+		if output, err := cmd.Output(); err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			lines := []string{
+				`sub-command => "info"`,
+				`argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}`,
+				`argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:"thatisuday"}`,
+				`argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:"math,science,physics"}`,
+				`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}`,
+				`flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}`,
+				`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
+				`flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInvert:true, DefaultValue:"true", Value:"false"}`,
 			}
 
 			for _, line := range lines {
@@ -227,7 +266,7 @@ func TestRootCommandWithOptions(t *testing.T) {
 		} else {
 			lines := []string{
 				`sub-command => ""`,
-				`argument-value => &clapper.Arg{Name:"output", DefaultValue:"", Value:"userinfo"}`,
+				`argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:"userinfo"}`,
 				`flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
 				`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
 				`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:"1.0.1"}`,
@@ -262,8 +301,9 @@ func TestSubCommandWithOptions(t *testing.T) {
 		} else {
 			lines := []string{
 				`sub-command => "info"`,
-				`argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}`,
-				`argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:""}`,
+				`argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}`,
+				`argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:""}`,
+				`argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}`,
 				`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
@@ -284,8 +324,8 @@ func TestSubCommandWithArguments(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "-v", "student", "-V", "2.0.0", "thatisuday", "extra"},
-		[]string{"info", "student", "-v", "thatisuday", "--version", "2.0.0", "extra"},
+		[]string{"info", "-v", "student", "-V", "2.0.0", "thatisuday"},
+		[]string{"info", "student", "-v", "thatisuday", "--version", "2.0.0"},
 	}
 
 	for _, options := range optionsList {
@@ -298,8 +338,9 @@ func TestSubCommandWithArguments(t *testing.T) {
 		} else {
 			lines := []string{
 				`sub-command => "info"`,
-				`argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}`,
-				`argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:"thatisuday"}`,
+				`argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}`,
+				`argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:"thatisuday"}`,
+				`argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:"2.0.0"}`,
 				`flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:""}`,
 				`flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}`,
