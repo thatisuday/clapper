@@ -1,5 +1,7 @@
 # clapper
-A simple but powerful Go package to parse command-line arguments [_getopt(3) style_](http://man7.org/linux/man-pages/man3/getopt.3.html). Designed especially for making CLI based libraries with ease.
+A simple but powerful Go package to parse command-line arguments [_getopt(3) style_](http://man7.org/linux/man-pages/man3/getopt.3.html). Designed especially for making CLI based libraries with ease. It has built-in support for sub-commands, long and short flag name combination (_for example `--version` <==> `-v`_), `--flag=<value>` syntax, inverted flag (_for example `--no-clean`_), variadic arguments, etc.
+
+> [**Commando**](https://github.com/thatisuday/commando) CLI application builder library uses this package to parse command-line arguments.
 
 ![go-version](https://img.shields.io/github/go-mod/go-version/thatisuday/clapper?label=Go%20Version) &nbsp;
 ![Build](https://github.com/thatisuday/clapper/workflows/CI/badge.svg?style=flat-square)
@@ -94,10 +96,10 @@ $ go run cmd.go
 
 sub-command => ""
 argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:""}
-flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInverted:false, DefaultValue:"", Value:""}
+flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInverted:false, DefaultValue:"/var/users", Value:""}
+flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:""}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:""}
 ```
 
 #### Example 2
@@ -120,10 +122,10 @@ $ go run cmd.go --version 1.0.1 --verbose --force --dir ./sub/dir userinfo
 
 sub-command => ""
 argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:"userinfo"}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:"1.0.1"}
-flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:"./sub/dir"}
-flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInverted:false, DefaultValue:"", Value:"1.0.1"}
+flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInverted:false, DefaultValue:"/var/users", Value:"./sub/dir"}
+flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:"true"}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:"true"}
 ```
 
 #### Example 4
@@ -155,10 +157,10 @@ $ go run cmd.go information --force
 
 sub-command => ""
 argument-value => &clapper.Arg{Name:"output", IsVariadic:false, DefaultValue:"", Value:"information"}
-flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInvert:false, DefaultValue:"/var/users", Value:""}
-flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:""}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"", Value:""}
+flag-value => &clapper.Flag{Name:"dir", ShortName:"", IsBoolean:false, IsInverted:false, DefaultValue:"/var/users", Value:""}
+flag-value => &clapper.Flag{Name:"force", ShortName:"f", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:"true"}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:""}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInverted:false, DefaultValue:"", Value:""}
 ```
 
 #### Example 6
@@ -171,14 +173,14 @@ sub-command => "info"
 argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}
 argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:""}
 argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}
-flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}
-flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInvert:true, DefaultValue:"true", Value:""}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInverted:false, DefaultValue:"1.0.1", Value:""}
+flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInverted:false, DefaultValue:"./", Value:"./opt/dir"}
+flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInverted:true, DefaultValue:"true", Value:""}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:"true"}
 ```
 
 #### Example 7
-When a command is executed with an **invert** flag (flag that starts with `--no-` prefix).
+When a command is executed with an **inverted** flag (flag that starts with `--no-` prefix).
 
 ```
 $ go run cmd.go info student -V -v --output ./opt/dir --no-clean
@@ -187,10 +189,10 @@ sub-command => "info"
 argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}
 argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:""}
 argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:""}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:""}
-flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:"./opt/dir"}
-flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInvert:true, DefaultValue:"true", Value:"false"}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInverted:false, DefaultValue:"1.0.1", Value:""}
+flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInverted:false, DefaultValue:"./", Value:"./opt/dir"}
+flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInverted:true, DefaultValue:"true", Value:"false"}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:"true"}
 ```
 
 #### Example 8
@@ -202,12 +204,13 @@ $ go run cmd.go info student -v --version=2.0.0 thatisuday math science physics
 $ go run cmd.go info student thatisuday math science -v physics -V=2.0.0
 
 sub-command => "info"
-argument-value => &clapper.Arg{Name:"category", DefaultValue:"manager", Value:"student"}
-argument-value => &clapper.Arg{Name:"username", DefaultValue:"", Value:"thatisuday"}
-flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInvert:false, DefaultValue:"1.0.1", Value:"2.0.0"}
-flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInvert:false, DefaultValue:"./", Value:""}
-flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInvert:true, DefaultValue:"true", Value:""}
-flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInvert:false, DefaultValue:"false", Value:"true"}
+argument-value => &clapper.Arg{Name:"category", IsVariadic:false, DefaultValue:"manager", Value:"student"}
+argument-value => &clapper.Arg{Name:"username", IsVariadic:false, DefaultValue:"", Value:"thatisuday"}
+argument-value => &clapper.Arg{Name:"subjects", IsVariadic:true, DefaultValue:"", Value:"math,science,physics"}
+flag-value => &clapper.Flag{Name:"version", ShortName:"V", IsBoolean:false, IsInverted:false, DefaultValue:"1.0.1", Value:"2.0.0"}
+flag-value => &clapper.Flag{Name:"output", ShortName:"o", IsBoolean:false, IsInverted:false, DefaultValue:"./", Value:""}
+flag-value => &clapper.Flag{Name:"clean", ShortName:"", IsBoolean:true, IsInverted:true, DefaultValue:"true", Value:""}
+flag-value => &clapper.Flag{Name:"verbose", ShortName:"v", IsBoolean:true, IsInverted:false, DefaultValue:"false", Value:"true"}
 ```
 
 #### Example 9

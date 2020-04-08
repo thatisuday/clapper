@@ -276,7 +276,7 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 				flag = carg.Flags[flagName]
 			} else {
 
-				// check if a flag is an invert flag
+				// check if a flag is an inverted flag
 				if ok, flagName := isInvertFlag(value); ok {
 					if _, ok := carg.Flags[flagName]; !ok {
 						return nil, ErrorUnknownFlag{value}
@@ -285,8 +285,8 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 					flag = carg.Flags[flagName]
 				} else {
 
-					// flag should not registered as an invert flag
-					if _flag, ok := carg.Flags[name]; !ok || _flag.IsInvert {
+					// flag should not registered as an inverted flag
+					if _flag, ok := carg.Flags[name]; !ok || _flag.IsInverted {
 						return nil, ErrorUnknownFlag{value}
 					}
 
@@ -296,8 +296,8 @@ func (registry Registry) Parse(values []string) (*Carg, error) {
 
 			// set flag value
 			if flag.IsBoolean {
-				if flag.IsInvert {
-					flag.Value = "false" // if flag is an invert flag, its value will be `false`
+				if flag.IsInverted {
+					flag.Value = "false" // if flag is an inverted flag, its value will be `false`
 				} else {
 					flag.Value = "true"
 				}
@@ -406,8 +406,8 @@ func (carg *Carg) AddArg(name string, defaultValue string) *Carg {
 // A boolean flag doesn't accept an input value such as `--flag=<value>` and its default value is "true".
 // The `defaultValue` argument represents the default value of the flag.
 // In case of a boolean flag, the `defaultValue` is redundant.
-// If the `name` value starts with `no-` prefix, then it is considered as an invert flag.
-// An invert flag is registered with the name `<flag>` produced by removing `no-` prefix from `no-<flag>` and its defaut value is "true".
+// If the `name` value starts with `no-` prefix, then it is considered as an inverted flag.
+// An inverted flag is registered with the name `<flag>` produced by removing `no-` prefix from `no-<flag>` and its defaut value is "true".
 // When command-line arguments contain `--no-<flag>`, the value of the `<flag>` becomes "false".
 // If a flag with given `name` is already registered, then flag registration is skipped and registered `*Carg` object returned.
 func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultValue string) *Carg {
@@ -417,7 +417,7 @@ func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultVal
 	_shortName := shortName
 	_defaultValue := defaultValue
 
-	// invert flag is a boolean flag with `no-` prefix
+	// inverted flag is a boolean flag with `no-` prefix
 	_isInvert := false
 
 	// short flag name should be only one character long
@@ -430,10 +430,10 @@ func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultVal
 
 		// check if flag name has `no-` prefix
 		if strings.HasPrefix(name, "no-") {
-			_isInvert = true                      // is an invert flag
+			_isInvert = true                      // is an inverted flag
 			_name = strings.TrimLeft(name, "no-") // trim `no-` prefix
-			_defaultValue = "true"                // default value of an invert flag is `true`
-			_shortName = ""                       // no short flag name for invert flag
+			_defaultValue = "true"                // default value of an inverted flag is `true`
+			_shortName = ""                       // no short flag name for inverted flag
 		} else {
 			_defaultValue = "false" // default value of a boolean flag is `true`
 		}
@@ -451,7 +451,7 @@ func (carg *Carg) AddFlag(name string, shortName string, isBool bool, defaultVal
 		Name:         _name,
 		ShortName:    _shortName,
 		IsBoolean:    isBool,
-		IsInvert:     _isInvert,
+		IsInverted:   _isInvert,
 		DefaultValue: _defaultValue,
 	}
 
@@ -480,8 +480,8 @@ type Flag struct {
 	// if the flag holds boolean value
 	IsBoolean bool
 
-	// if the flag is an invert flag (with `--no-` prefix)
-	IsInvert bool
+	// if the flag is an inverted flag (with `--no-` prefix)
+	IsInverted bool
 
 	// default value of the flag
 	DefaultValue string
