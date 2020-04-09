@@ -378,7 +378,7 @@ type CommandConfig struct {
 // Variadic argument can accept multiple argument values and it should be the last registered argument.
 // Values of a variadic argument will be concatenated using comma (,).
 // The `defaultValue` argument represents the default value of the argument.
-// All arguments with a default value must be registered first.
+// All arguments without a default value must be registered first.
 // If an argument with given `name` is already registered, then argument registration is skipped
 // and registered `*Arg` object returned.
 // If the argument is already registered, second return value will be `true`.
