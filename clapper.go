@@ -212,7 +212,7 @@ func (registry Registry) Register(name string) (*CommandConfig, bool) {
 		Flags:      make(map[string]*Flag),
 		flagsShort: make(map[string]string),
 		Args:       make(map[string]*Arg),
-		argNames:   make([]string, 0),
+		ArgNames:   make([]string, 0),
 	}
 
 	// add entry to the registry
@@ -324,7 +324,7 @@ func (registry Registry) Parse(values []string) (*CommandConfig, error) {
 		} else {
 
 			// process as argument
-			for index, argName := range commandConfig.argNames {
+			for index, argName := range commandConfig.ArgNames {
 
 				// get argument object stored in the `commandConfig`
 				arg := commandConfig.Args[argName]
@@ -336,7 +336,7 @@ func (registry Registry) Parse(values []string) (*CommandConfig, error) {
 				}
 
 				// if last argument is a variadic argument, append values
-				if (index == len(commandConfig.argNames)-1) && arg.IsVariadic {
+				if (index == len(commandConfig.ArgNames)-1) && arg.IsVariadic {
 					arg.Value += fmt.Sprintf(",%s", value)
 				}
 			}
@@ -369,7 +369,7 @@ type CommandConfig struct {
 	Args map[string]*Arg
 
 	// list of the argument names (for ordered iteration)
-	argNames []string
+	ArgNames []string
 }
 
 // AddArg registers an argument configuration with the command.
@@ -411,7 +411,7 @@ func (commandConfig *CommandConfig) AddArg(name string, defaultValue string) (*A
 	commandConfig.Args[_name] = arg
 
 	// store argument name (for ordered iteration)
-	commandConfig.argNames = append(commandConfig.argNames, _name)
+	commandConfig.ArgNames = append(commandConfig.ArgNames, _name)
 
 	return arg, false
 }
