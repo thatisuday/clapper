@@ -52,12 +52,12 @@ func main() {
 	fmt.Printf("sub-command => %#v\n", command.Name)
 
 	// get argument values
-	for _, v := range command.Args {
-		fmt.Printf("argument-value => %#v\n", v)
+	for argName, argValue := range command.Args {
+		fmt.Printf("argument(%s) => %#v\n", argName, argValue)
 	}
 
 	// get flag values
-	for _, v := range command.Flags {
-		fmt.Printf("flag-value => %#v\n", v)
+	for flagName, flagValue := range command.Flags {
+		fmt.Printf("flag(%s) => %#v\n", flagName, flagValue)
 	}
 }
