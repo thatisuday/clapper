@@ -13,23 +13,32 @@ import (
 // test unsupported flag
 func TestUnsupportedAssignment(t *testing.T) {
 
-	// options
-	options := map[string][]string{
-		"---version": []string{"---version"},
-		"---v":       []string{"---v=1.0.0"},
-		"-version":   []string{"-version"},
+	tests := []struct {
+		flag    string
+		options string
+		err     error
+	}{
+		{"---version", "---version", ErrorUnsupportedFlag{}},
+		{"---v", "---v=1.0.0", ErrorUnsupportedFlag{}},
+		// Single-dash for long names was never supported, but now this is interpreted as:
+		// -v -e -r -s -i -o -n; ergo, the error will be "unknown option '-e'"
+		{"-e", "-version", ErrorUnknownFlag{}},
 	}
 
-	for flag, options := range options {
-		// command
-		cmd := exec.Command("go", append([]string{"run", "demo/cmd.go"}, options...)...)
+	for _, test := range tests {
+		reg := NewRegistry()
+		root, _ := reg.Register("")
+		root.AddFlag("version", "v", true, "")
 
-		// get output
-		if output, err := cmd.Output(); err != nil {
-			fmt.Println("Error:", err)
+		_, err := reg.Parse([]string{test.options})
+		if err == nil {
+			t.Errorf("(%s) expected parse error %T", test.options, test.err)
 		} else {
-			if !strings.Contains(fmt.Sprintf("%s", output), fmt.Sprintf(`error => clapper.ErrorUnsupportedFlag{Name:"%s"}`, flag)) {
-				t.Fail()
+			if fmt.Sprintf("%T", err) != fmt.Sprintf("%T", test.err) {
+				t.Errorf("(%s) expected %T error -- got %T", test.options, test.err, err)
+			}
+			if !strings.Contains(err.Error(), test.flag) {
+				t.Errorf("(%s) expected error %q -- got %q", test.options, test.flag, err)
 			}
 		}
 	}
@@ -88,9 +97,9 @@ func TestUnregisteredFlag(t *testing.T) {
 
 	// flags
 	flags := map[string][]string{
-		"-d":          []string{"-V", "1.0.1", "-v", "--force", "-d", "./sub/dir"},
-		"--m":         []string{"-V", "1.0.1", "-v", "--force", "--m", "./sub/dir"},
-		"--directory": []string{"-V", "1.0.1", "-v", "--force", "--directory", "./sub/dir"},
+		"-d":          {"-V", "1.0.1", "-v", "--force", "-d", "./sub/dir"},
+		"--m":         {"-V", "1.0.1", "-v", "--force", "--m", "./sub/dir"},
+		"--directory": {"-V", "1.0.1", "-v", "--force", "--directory", "./sub/dir"},
 	}
 
 	for flag, options := range flags {
@@ -114,8 +123,8 @@ func TestValidInvertFlagValues(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "student", "-V", "-v", "--output", "./opt/dir", "--no-clean"},
-		[]string{"info", "student", "--version", "--no-clean", "--output", "./opt/dir", "--verbose"},
+		{"info", "student", "-V", "-v", "--output", "./opt/dir", "--no-clean"},
+		{"info", "student", "--version", "--no-clean", "--output", "./opt/dir", "--verbose"},
 	}
 
 	for _, options := range optionsList {
@@ -151,8 +160,8 @@ func TestErrorUnknownFlagForInvertFlags(t *testing.T) {
 
 	// options list
 	optionsList := map[string][]string{
-		"--clean":   []string{"info", "student", "-V", "-v", "--output", "./opt/dir", "--clean"},
-		"--no-dump": []string{"info", "student", "--version", "--no-dump", "--output", "./opt/dir", "--verbose"},
+		"--clean":   {"info", "student", "-V", "-v", "--output", "./opt/dir", "--clean"},
+		"--no-dump": {"info", "student", "--version", "--no-dump", "--output", "./opt/dir", "--verbose"},
 	}
 
 	for flag, options := range optionsList {
@@ -175,8 +184,8 @@ func TestFlagAssignmentSyntax(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "student", "-v", "--version=2.0.0", "thatisuday"},
-		[]string{"info", "student", "thatisuday", "-v", "-V=2.0.0"},
+		{"info", "student", "-v", "--version=2.0.0", "thatisuday"},
+		{"info", "student", "thatisuday", "-v", "-V=2.0.0"},
 	}
 
 	for _, options := range optionsList {
@@ -199,7 +208,7 @@ func TestFlagAssignmentSyntax(t *testing.T) {
 
 			for _, line := range lines {
 				if !strings.Contains(fmt.Sprintf("%s", output), line) {
-					t.Fail()
+					t.Errorf("expected\n  %s\ngot\n  %s", line, output)
 				}
 			}
 		}
@@ -211,8 +220,8 @@ func TestValidVariadicArgumentValues(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "student", "thatisuday", "-V", "-v", "--output", "./opt/dir", "--no-clean", "math", "science", "physics"},
-		[]string{"info", "student", "--version", "--no-clean", "thatisuday", "--output", "./opt/dir", "math", "science", "--verbose", "physics"},
+		{"info", "student", "thatisuday", "-V", "-v", "--output", "./opt/dir", "--no-clean", "math", "science", "physics"},
+		{"info", "student", "--version", "--no-clean", "thatisuday", "--output", "./opt/dir", "math", "science", "--verbose", "physics"},
 	}
 
 	for _, options := range optionsList {
@@ -250,10 +259,10 @@ func TestRootCommandWithOptions(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"userinfo", "-V", "1.0.1", "-v", "--force", "--dir", "./sub/dir"},
-		[]string{"-V", "1.0.1", "--verbose", "--force", "userinfo", "--dir", "./sub/dir"},
-		[]string{"-V", "1.0.1", "-v", "--force", "--dir", "./sub/dir", "userinfo"},
-		[]string{"--version", "1.0.1", "--verbose", "--force", "--dir", "./sub/dir", "userinfo"},
+		{"userinfo", "-V", "1.0.1", "-v", "--force", "--dir", "./sub/dir"},
+		{"-V", "1.0.1", "--verbose", "--force", "userinfo", "--dir", "./sub/dir"},
+		{"-V", "1.0.1", "-v", "--force", "--dir", "./sub/dir", "userinfo"},
+		{"--version", "1.0.1", "--verbose", "--force", "--dir", "./sub/dir", "userinfo"},
 	}
 
 	for _, options := range optionsList {
@@ -287,8 +296,8 @@ func TestSubCommandWithOptions(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "student", "-V", "-v", "--output", "./opt/dir"},
-		[]string{"info", "student", "--version", "--output", "./opt/dir", "--verbose"},
+		{"info", "student", "-V", "-v", "--output", "./opt/dir"},
+		{"info", "student", "--version", "--output", "./opt/dir", "--verbose"},
 	}
 
 	for _, options := range optionsList {
@@ -324,8 +333,8 @@ func TestSubCommandWithArguments(t *testing.T) {
 
 	// options list
 	optionsList := [][]string{
-		[]string{"info", "-v", "student", "-V", "2.0.0", "thatisuday"},
-		[]string{"info", "student", "-v", "thatisuday", "--version", "2.0.0"},
+		{"info", "-v", "student", "-V", "2.0.0", "thatisuday"},
+		{"info", "student", "-v", "thatisuday", "--version", "2.0.0"},
 	}
 
 	for _, options := range optionsList {
@@ -350,6 +359,62 @@ func TestSubCommandWithArguments(t *testing.T) {
 				if !strings.Contains(fmt.Sprintf("%s", output), line) {
 					t.Fail()
 				}
+			}
+		}
+	}
+}
+
+// test sub-command with valid and extra arguments
+func TestCombinedFlags(t *testing.T) {
+
+	// tests
+	tests := []struct {
+		Name           string
+		Args           []string
+		ExpectedNames  []string
+		ExpectedValues []string
+	}{
+		{"one flag", []string{"-a"}, []string{"alpha"}, []string{"true"}},
+		{"two flags", []string{"-ab"}, []string{"alpha", "bravo"}, []string{"true", "true"}},
+		{"one flag & default", []string{"-a"}, []string{"alpha", "bravo"}, []string{"true", ""}},
+		{"two flags & var", []string{"-abc", "value"}, []string{"alpha", "bravo", "charlie"}, []string{"true", "true", "value"}},
+		// This is weird, but it was not an error to have non-boolean flags that are missing values, and to preserve
+		// backwards compatability this was not changed.
+		{"unset flag", []string{"-acb", "value"}, []string{"alpha", "bravo", "charlie"}, []string{"true", "true", ""}},
+	}
+
+	for _, test := range tests {
+		reg := NewRegistry()
+		root, _ := reg.Register("")
+		root.AddFlag("alpha", "a", true, "")
+		root.AddFlag("bravo", "b", true, "")
+		root.AddFlag("charlie", "c", false, "none")
+
+		cmd, err := reg.Parse(test.Args)
+		if err != nil {
+			fmt.Printf("parse error %s\n", err)
+			if len(test.ExpectedNames) > 0 {
+				t.Errorf("(%s) unexpected parse error: %s", test.Name, err)
+			}
+			// else, expected error
+			continue
+		}
+		if len(test.ExpectedNames) == 0 && err == nil {
+			t.Errorf("(%s) expected parse error; didn't get one", test.Name)
+		}
+		// Check that all expected arguments are there
+		for i, n := range test.ExpectedNames {
+			var found bool
+			for _, a := range cmd.Flags {
+				if a.Name == n {
+					if a.Value != test.ExpectedValues[i] {
+						t.Errorf("(%s) expected value %s for %s, got %s", test.Name, test.ExpectedValues[i], n, a.Value)
+					}
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("(%s) did not find expected argument %s", test.Name, n)
 			}
 		}
 	}

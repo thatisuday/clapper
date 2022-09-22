@@ -39,22 +39,49 @@ func formatCommandValues(values []string) (formatted []string) {
 
 	formatted = make([]string, 0)
 
-	// split a value by `=`
-	for _, value := range values {
-		if isFlag(value) {
-			parts := strings.Split(value, "=")
+	for _, presplit := range values {
+		for _, value := range detectSplitCombined(presplit) {
+			// split a value by `=`
+			if isFlag(value) {
+				parts := strings.Split(value, "=")
 
-			for _, part := range parts {
-				if strings.Trim(part, " ") != "" {
-					formatted = append(formatted, part)
+				for _, part := range parts {
+					if strings.Trim(part, " ") != "" {
+						formatted = append(formatted, part)
+					}
 				}
+			} else {
+				formatted = append(formatted, value)
 			}
-		} else {
-			formatted = append(formatted, value)
 		}
 	}
 
 	return
+}
+
+// detectSplitCombined checks whether the argument is a combined flag and breaks
+// it apart if it is. E.g., for declared flags `-a` and `-b`, the provided
+// argument `-ab` will be broken in two.
+func detectSplitCombined(s string) []string {
+	// Don't try to process assignments
+	if strings.Contains(s, "=") {
+		return []string{s}
+	}
+	// If it's a long-form argument, then no split
+	if strings.HasPrefix(s, "--") {
+		return []string{s}
+	}
+	if strings.HasPrefix(s, "-") {
+		parts := strings.Split(s, "")
+		for i, p := range parts {
+			if i == 0 {
+				continue
+			}
+			parts[i] = "-" + p
+		}
+		return parts[1:]
+	}
+	return []string{s}
 }
 
 // check if value is a flag
